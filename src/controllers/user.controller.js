@@ -11,6 +11,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+// Create user function is to be used by admin only, the registration is for public
 const createUser = async (req, res) => {
   try {
     const { email, name, password } = req.body;

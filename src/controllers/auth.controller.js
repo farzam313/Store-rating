@@ -15,7 +15,6 @@ export const register = async (req, res) => {
         .json({ message: "Email, password and name are required" });
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -24,10 +23,8 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -40,14 +37,12 @@ export const register = async (req, res) => {
       throw new Error("JWT_SECRET is not defined in environment variables");
     }
 
-    // Generate token (convert ID to string for consistency)
     const token = jwt.sign(
       { userId: newUser.id.toString(), email: newUser.email },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // Remove password from response
     const { password: _, ...userWithoutPassword } = newUser;
 
     res.status(201).json({
@@ -68,10 +63,9 @@ export const login = async (req, res) => {
     if (!email || !password) {
       return res
         .status(400)
-        .json({ message: "Email and Password are required" });
+        .json({ message: "Email and Password are Required" });
     }
 
-    // Find user
     const user = await prisma.user.findUnique({
       where: { email },
     });
@@ -80,7 +74,6 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
@@ -91,14 +84,12 @@ export const login = async (req, res) => {
       throw new Error("JWT_SECRET is not defined in environment variables");
     }
 
-    // Generate token
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
 
     res.json({
@@ -153,10 +144,8 @@ export const refreshToken = async (req, res) => {
       return res.status(400).json({ message: "Token is required." });
     }
 
-    // Verify old token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Generate new token
     const newToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email },
       process.env.JWT_SECRET,
