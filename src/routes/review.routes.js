@@ -1,5 +1,5 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getAllReviews,
   createReview,
   getReviewById,
@@ -10,7 +10,7 @@ const {
   getRecentReviews,
   getReviewStats,
   getReviewsByDateRange,
-} = require("../controllers/review.controller.js");
+} from "../controllers/review.controller.js";
 
 const router = express.Router();
 
@@ -25,4 +25,4 @@ router.get("/date", getReviewsByDateRange);
 router.get("/user/:userId", getUserReviews);
 router.get("/:id", getReviewById);
 
-module.exports = router;
+export default router;

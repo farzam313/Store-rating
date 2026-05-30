@@ -1,6 +1,6 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-const bcrypt = require("bcrypt");
+import bcrypt from "bcrypt";
 const getAllUsers = async (req, res) => {
   try {
     const users = await prisma.user.findMany();
@@ -221,9 +221,7 @@ const searchUsers = async (req, res) => {
   }
 };
 
-module.exports = { searchUsers };
-
-module.exports = {
+export {
   getAllUsers,
   createUser,
   getUserById,

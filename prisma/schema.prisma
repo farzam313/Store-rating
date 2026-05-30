@@ -10,29 +10,30 @@ datasource db {
 }
 
 model User {
-  id              Int             @id @default(autoincrement())
-  email           String          @unique
-  name            String
-  password        String
-  active          Boolean         @default(true)
-  activationKey   String?         @db.VarChar(32)
-  rememberToken   String?         @db.VarChar(32)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  name           String
+  password       String
+  active         Boolean         @default(true)
+  activationKey  String?         @db.VarChar(32)
+  rememberToken  String?         @db.VarChar(32)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   // Relations
-  roles           UserRole[]
-  reviews         Review[]
-  passwordResets  PasswordReset[]
+  roles          UserRole[]
+  reviews        Review[]
+  passwordResets PasswordReset[]
+  stores         Store[]         // <-- Added: One user can own/manage multiple stores
 }
 
 model Role {
-  id          Int          @id @default(autoincrement())
+  id          Int              @id @default(autoincrement())
   displayName String
-  name        String       @unique
+  name        String           @unique
   description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   users       UserRole[]
   permissions RolePermission[]
@@ -48,12 +49,12 @@ model UserRole {
 }
 
 model Permission {
-  id          Int          @id @default(autoincrement())
-  name        String       @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   displayName String
   description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   roles RolePermission[]
 }
@@ -75,13 +76,136 @@ model PasswordReset {
   user User @relation(fields: [userId], references: [id])
 }
 
+// <-- Added: New Store Model
+model Store {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  address     String?
+  userId      Int      // Foreign key linking to the owner/manager
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  reviews     Review[] // A store can have many reviews
+}
+
 model Review {
   id        Int      @id @default(autoincrement())
   comment   String
   rating    Int
   userId    Int
+  storeId   Int      // <-- Added: Links the review to a specific store
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id]) // <-- Added
+}// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  email          String          @unique
+  name           String
+  password       String
+  active         Boolean         @default(true)
+  activationKey  String?         @db.VarChar(32)
+  rememberToken  String?         @db.VarChar(32)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  // Relations
+  roles          UserRole[]
+  reviews        Review[]
+  passwordResets PasswordReset[]
+  stores         Store[]         // <-- Added: One user can own/manage multiple stores
+}
+
+model Role {
+  id          Int              @id @default(autoincrement())
+  displayName String
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  roleId Int
+
   user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  displayName String
+  description String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  id           Int        @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+}
+
+model PasswordReset {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  token  String @db.VarChar(32)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// <-- Added: New Store Model
+model Store {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?  @db.Text
+  address     String?
+  userId      Int      // Foreign key linking to the owner/manager
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  reviews     Review[] // A store can have many reviews
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  comment   String
+  rating    Int
+  userId    Int
+  storeId   Int      // <-- Added: Links the review to a specific store
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  store     Store    @relation(fields: [storeId], references: [id]) // <-- Added
 }

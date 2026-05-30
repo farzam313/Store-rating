@@ -6,6 +6,11 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const register = async (req, res) => {
+  console.log(
+    "Registration Request Received::: HAHAHAHHAHAHHAHAH ::::",
+    req.body
+  );
+
   try {
     const { email, password, name } = req.body;
 
@@ -25,11 +30,38 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Get the default user role
+    const userRole = await prisma.role.findUnique({
+      where: { name: "user" },
+    });
+
+    if (!userRole) {
+      return res.status(500).json({
+        message: "Default user role not found. Please run database seeds.",
+      });
+    }
+
     const newUser = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
         name: name,
+        roles: {
+          create: [
+            {
+              role: {
+                connect: { id: userRole.id },
+              },
+            },
+          ],
+        },
+      },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
@@ -43,7 +75,15 @@ export const register = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const { password: _, ...userWithoutPassword } = newUser;
+    const { password: password_, ...newUserObj } = newUser;
+    const roles = (newUserObj.roles || []).map((ur) => ({
+      id: ur.role.id,
+      name: ur.role.name,
+      displayName: ur.role.displayName,
+      description: ur.role.description || null,
+    }));
+
+    const userWithoutPassword = { ...newUserObj, roles };
 
     res.status(201).json({
       message: "User registered successfully",
@@ -68,6 +108,13 @@ export const login = async (req, res) => {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -90,7 +137,18 @@ export const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: password_, ...userObj } = user;
+
+    // Map nested UserRole -> Role objects to a simpler roles array
+    const roles = (userObj.roles || []).map((ur) => ({
+      id: ur.role.id,
+      name: ur.role.name,
+      displayName: ur.role.displayName,
+      description: ur.role.description || null,
+    }));
+
+    const userWithoutPassword = { ...userObj, roles };
+    console.log(userWithoutPassword);
 
     res.json({
       message: "Login Successful",
@@ -116,12 +174,10 @@ export const getCurrentUser = async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        roles: {
+          include: { role: true },
+        },
       },
     });
 
@@ -129,7 +185,15 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json({ user });
+    const roles = (user.roles || []).map((ur) => ({
+      id: ur.role.id,
+      name: ur.role.name,
+      displayName: ur.role.displayName,
+      description: ur.role.description || null,
+    }));
+
+    const { password: password_, roles: roles_, ...userPublic } = user;
+    res.json({ user: { ...userPublic, roles } });
   } catch (err) {
     console.error("Error fetching current user:", err);
     res.status(500).json({ error: err.message });

@@ -1,4 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const getAllReviews = async (req, res) => {
@@ -270,7 +270,7 @@ const getReviewsByDateRange = async (req, res) => {
   }
 };
 
-module.exports = {
+export {
   getAllReviews,
   createReview,
   getReviewById,

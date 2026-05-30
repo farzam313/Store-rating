@@ -1,5 +1,5 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   getAllUsers,
   createUser,
   getUserById,
@@ -9,7 +9,7 @@ const {
   getPaginatedUsers,
   getUserByEmail,
   searchUsers,
-} = require("../controllers/user.controller.js");
+} from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -25,4 +25,4 @@ router.delete("/:id", removeUser);
 router.get("/:id", getUserById);
 router.put("/:id", updateUser);
 
-module.exports = router;
+export default router;
