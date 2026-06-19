@@ -3,6 +3,7 @@ import cors from "cors";
 import userRoutes from "./src/routes/user.routes.js";
 import reviewRoutes from "./src/routes/review.routes.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import storeRoutes from "./src/routes/store.routes.js";
 
 const app = express();
 const corsOptions = {
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 app.use("/users", userRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/auth", authRoutes);
+app.use("/stores", storeRoutes);
 
 const PORT = process.env.PORT || 4000;
 
@@ -39,7 +41,7 @@ const server = app
   .on("error", (err) => {
     if (err.code === "EADDRINUSE") {
       console.error(
-        `Port ${PORT} is already in use. Please try a different port or stop the other process.`
+        `Port ${PORT} is already in use. Please try a different port or stop the other process.`,
       );
     } else {
       console.error("Failed to start server:", err);
