@@ -1,18 +1,27 @@
 import { PrismaClient } from "@prisma/client";
+
 const prisma = new PrismaClient();
 
 // Get all stores
 const getAllStores = async (req, res) => {
   try {
-    const stores = await prisma.store.findMany({
-      include: {
-        user: {
-          select: { id: true, name: true, email: true },
-        },
-        reviews: true,
-      },
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const [stores, totalStores] = await prisma.$transaction([
+      prisma.store.findMany({
+        skip: skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.store.count(),
+    ]);
+    const totalPages = Math.ceil(totalStores / limit);
+
+    res.json({
+      data: stores,
+      meta: { totalStores, currentPage: page, totalPages, limit },
     });
-    res.json(stores);
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({ error: error.message });

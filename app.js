@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import userRoutes from "./src/routes/user.routes.js";
@@ -13,6 +14,12 @@ const corsOptions = {
   allowedHeaders: "Content-Type,Authorization",
 };
 
+// Log every incoming request
+app.use((req, res, next) => {
+  console.log(`[REQUEST RECEIVED] ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,6 +31,9 @@ app.use("/users", userRoutes);
 app.use("/reviews", reviewRoutes);
 app.use("/auth", authRoutes);
 app.use("/stores", storeRoutes);
+
+// API-prefixed routes (frontend expects /api/stores)
+app.use("/api/stores", storeRoutes);
 
 const PORT = process.env.PORT || 4000;
 
