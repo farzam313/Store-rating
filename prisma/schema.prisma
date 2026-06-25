@@ -82,6 +82,8 @@ model Store {
   name        String
   description String?  @db.Text
   address     String?
+  icon        String?
+  rating      Float    @default(0)
   userId      Int      // Foreign key linking to the owner/manager
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

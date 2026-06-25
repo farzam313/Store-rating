@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `store` ADD COLUMN `icon` VARCHAR(191) NULL,
+    ADD COLUMN `rating` DOUBLE NOT NULL DEFAULT 0;
