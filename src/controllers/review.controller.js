@@ -19,6 +19,25 @@ const getAllReviews = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const getReviewByStoreId = async (req, res) => {
+  try {
+    const storeId = req.params.storeId;
+    const parsedStoreId = parseInt(storeId);
+    if (isNaN(parsedStoreId)) {
+      return res.status(400).json({ error: "Invalid store ID" });
+    }
+    const reviews = await prisma.review.findMany({
+      where: { storeId: parsedStoreId },
+      include: { user: { select: { name: true } } },
+    });
+    res.json(reviews);
+  } catch (err) {
+    console.error("Error getting reviews by store ID:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const getReviewById = async (req, res) => {
   try {
     const id = req.params.id;
@@ -34,7 +53,7 @@ const getReviewById = async (req, res) => {
 
 const deleteReviewById = async (req, res) => {
   try {
-    const { id } = req.body.id;
+    const id = req.params.id;
     const review = await prisma.review.delete({
       where: { id: parseInt(id) },
     });
@@ -47,11 +66,11 @@ const deleteReviewById = async (req, res) => {
 
 const createReview = async (req, res) => {
   try {
-    const { userId, rating, comment } = req.body;
+    const { userId, storeId, rating, comment } = req.body;
 
-    if (!userId || !rating || !comment) {
+    if (!userId || !storeId || !rating || !comment) {
       return res.status(400).json({
-        error: "User ID, rating, and comment are required",
+        error: "User ID, storeId, rating, and comment are required",
       });
     }
 
@@ -61,10 +80,25 @@ const createReview = async (req, res) => {
       });
     }
 
+    const userExists = await prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+    if (!userExists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const storeExists = await prisma.store.findUnique({
+      where: { id: parseInt(storeId) },
+    });
+    if (!storeExists) {
+      return res.status(404).json({ error: "Store not found" });
+    }
+
     const review = await prisma.review.create({
       data: {
-        userId,
-        rating,
+        userId: parseInt(userId),
+        storeId: parseInt(storeId),
+        rating: parseInt(rating),
         comment,
       },
       include: {
@@ -72,6 +106,13 @@ const createReview = async (req, res) => {
           select: {
             name: true,
             email: true,
+          },
+        },
+        store: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
           },
         },
       },
@@ -82,7 +123,7 @@ const createReview = async (req, res) => {
     console.error("Error creating review:", err);
     if (err.code === "P2003") {
       return res.status(400).json({
-        error: "User not found",
+        error: "Invalid foreign key reference",
       });
     }
     res.status(500).json({ error: err.message });
@@ -96,7 +137,7 @@ const updateReview = async (req, res) => {
       return res.status(400).json({ error: "Review ID is required" });
     }
     const updatedData = {};
-    if (rating) {
+    if (rating !== undefined) {
       if (rating < 1 || rating > 5) {
         return res
           .status(400)
@@ -104,7 +145,7 @@ const updateReview = async (req, res) => {
       }
       updatedData.rating = rating;
     }
-    if (!comment) {
+    if (comment !== undefined) {
       updatedData.comment = comment;
     }
     const review = await prisma.review.update({
@@ -281,4 +322,5 @@ export {
   getRecentReviews,
   getReviewStats,
   getReviewsByDateRange,
+  getReviewByStoreId,
 };

@@ -107,7 +107,7 @@ const createStore = async (req, res) => {
 const updateStore = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, address } = req.body;
+    const { name, description, address, icon, rating } = req.body;
 
     if (!id) {
       return res.status(400).json({ error: "Store ID is required" });
@@ -119,6 +119,8 @@ const updateStore = async (req, res) => {
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(address !== undefined && { address }),
+        ...(icon !== undefined && { icon }),
+        ...(rating !== undefined && { rating: parseFloat(rating) }),
       },
       include: {
         user: {

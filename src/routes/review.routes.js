@@ -10,6 +10,7 @@ import {
   getRecentReviews,
   getReviewStats,
   getReviewsByDateRange,
+  getReviewByStoreId,
 } from "../controllers/review.controller.js";
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.get("/rating/:rating", getReviewsByRating);
 router.get("/date", getReviewsByDateRange);
 router.get("/user/:userId", getUserReviews);
 router.get("/:id", getReviewById);
+router.get("/store/:storeId", getReviewByStoreId);
 
 export default router;

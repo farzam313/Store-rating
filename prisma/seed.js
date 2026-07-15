@@ -173,29 +173,56 @@ async function main() {
   });
   console.log("✅ Stores seeded.");
 
-  const storeRecords = await prisma.store.findMany();
+  const storeRecords = await prisma.store.findMany({
+    orderBy: { name: "asc" },
+  });
+  const storesByName = Object.fromEntries(
+    storeRecords.map((store) => [store.name, store]),
+  );
 
   // --- Reviews ---
-  const reviewsData = [
-    {
-      comment: "Great selection and helpful staff.",
+  const reviewsData = [];
+  const reviewTemplates = [
+    (storeName, index) => ({
+      comment: `Absolutely loved the experience at ${storeName}. Friendly staff and a welcoming atmosphere! (${index + 1})`,
       rating: 5,
-      userId: adminUser.id,
-      storeId: storeRecords[0].id,
-    },
-    {
-      comment: "Nice atmosphere, but a bit crowded.",
+    }),
+    (storeName, index) => ({
+      comment: `Great service at ${storeName}. The pricing felt fair and the team was helpful. (${index + 1})`,
       rating: 4,
-      userId: adminUser.id,
-      storeId: storeRecords[1].id,
-    },
-    {
-      comment: "Fast service and good prices.",
+    }),
+    (storeName, index) => ({
+      comment: `${storeName} has a nice setup and excellent attention to detail. I would come back again. (${index + 1})`,
+      rating: 5,
+    }),
+    (storeName, index) => ({
+      comment: `The location of ${storeName} is convenient and the overall quality was impressive. (${index + 1})`,
       rating: 4,
-      userId: ownerUser1.id,
-      storeId: storeRecords[2].id,
-    },
+    }),
+    (storeName, index) => ({
+      comment: `The experience at ${storeName} exceeded expectations with fast service and a friendly team. (${index + 1})`,
+      rating: 5,
+    }),
   ];
+
+  const usersForReviews = [adminUser, ownerUser1, ownerUser2];
+  const storeNames = Object.keys(storesByName);
+
+  for (const storeName of storeNames) {
+    const store = storesByName[storeName];
+    for (let i = 0; i < 15; i += 1) {
+      const reviewTemplate = reviewTemplates[i % reviewTemplates.length](
+        storeName,
+        i,
+      );
+      reviewsData.push({
+        ...reviewTemplate,
+        userId: usersForReviews[i % usersForReviews.length].id,
+        storeId: store.id,
+      });
+    }
+  }
+
   await prisma.review.createMany({ data: reviewsData });
   console.log("✅ Reviews seeded.");
 

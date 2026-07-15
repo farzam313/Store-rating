@@ -134,12 +134,12 @@ export const login = async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "30m" }
     );
 
     const { password: password_, ...userObj } = user;
 
-    // Map nested UserRole -> Role objects to a simpler roles array
+    
     const roles = (userObj.roles || []).map((ur) => ({
       id: ur.role.id,
       name: ur.role.name,
@@ -148,7 +148,7 @@ export const login = async (req, res) => {
     }));
 
     const userWithoutPassword = { ...userObj, roles };
-    console.log(userWithoutPassword);
+    // console.log(userWithoutPassword);
 
     res.json({
       message: "Login Successful",
